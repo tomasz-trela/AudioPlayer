@@ -2,25 +2,18 @@ package com.example.audioplayer.audioplayer.domain
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.audioplayer.audioList.data.Song
 import com.example.audioplayer.audioplayer.data.AudioPlayer
 import com.example.audioplayer.audioplayer.data.PlayerState
+import com.example.audioplayer.audioplayer.data.SongRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-data class AudioPlayerUiState(
-    val isPlaying: Boolean = false,
-    val progress: Float = 0f,
-    val duration: Float = 1f,
-    val currentSong: Song? = null
-)
+class AudioPlayerViewModel(context: Any?, songRepository: SongRepository) : ViewModel() {
 
-class AudioPlayerViewModel(context: Any?) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(AudioPlayerUiState())
+    private val _uiState = MutableStateFlow(AudioPlayerUiState(songs = songRepository.getSongs()))
     val uiState: StateFlow<AudioPlayerUiState> = _uiState.asStateFlow()
 
     private val audioPlayer: AudioPlayer = AudioPlayer(
@@ -32,18 +25,24 @@ class AudioPlayerViewModel(context: Any?) : ViewModel() {
     )
 
     init {
-        val url = uiState.value.currentSong?.url
-        if (url != null)
-            audioPlayer.prepare(url)
+        audioPlayer.initPlaylist(_uiState.value.songs)
+        if (_uiState.value.songs.isNotEmpty()) {
+            _uiState.update { it.copy(songIndex = 0) }
+        }
     }
 
     private fun onProgressUpdate(playerState: PlayerState) {
         viewModelScope.launch {
-            _uiState.update {
-                it.copy(
+            _uiState.update { currentState ->
+                val newIndex = currentState.songs.indexOfFirst { song ->
+                    song.url == playerState.currentPlayingResource
+                }.takeIf { it != -1 } ?: currentState.songIndex
+
+                currentState.copy(
                     isPlaying = playerState.isPlaying,
-                    progress = playerState.currentTime.takeIf { v -> !v.isNaN() } ?: 0f,
-                    duration = playerState.duration.takeIf { v -> !v.isNaN() && v > 0f } ?: 1f
+                    progress = playerState.currentTime.takeIf { v -> v.isFinite() } ?: 0f,
+                    duration = playerState.duration.takeIf { v -> v.isFinite() && v > 0f } ?: 1f,
+                    songIndex = newIndex
                 )
             }
         }
@@ -57,29 +56,29 @@ class AudioPlayerViewModel(context: Any?) : ViewModel() {
     }
 
     private fun onError(exception: Exception) {
-        println("AudioPlayerViewModel Error: $exception")
         _uiState.update { it.copy(isPlaying = false) }
     }
 
-    fun changeSong(song: Song) {
-        if (_uiState.value.currentSong == null) {
-            audioPlayer.prepare(song.url)
-        }
-        _uiState.update { it.copy(currentSong = song) }
-        audioPlayer.play(song.url)
+    fun changeSong(index: Int) {
+        if (index < 0 || index >= _uiState.value.songs.size) return
+        _uiState.update { it.copy(songIndex = index) }
+        audioPlayer.play(index)
+    }
+
+    fun playNextSong() {
+        audioPlayer.playNext()
+    }
+
+    fun playPreviousSong() {
+        audioPlayer.playPrevious()
     }
 
     fun togglePlayPause() {
-        val currentState = _uiState.value
-
-        if (currentState.currentSong == null) {
-            return
-        }
-
-        if (currentState.isPlaying) {
+        val state = _uiState.value
+        if (state.isPlaying) {
             audioPlayer.pause()
         } else {
-            audioPlayer.play(currentState.currentSong.url)
+            audioPlayer.play(state.songIndex ?: 0)
         }
     }
 

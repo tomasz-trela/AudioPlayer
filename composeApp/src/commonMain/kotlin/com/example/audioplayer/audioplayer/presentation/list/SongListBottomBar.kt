@@ -1,10 +1,12 @@
-package com.example.audioplayer.audioList.presentation
+package com.example.audioplayer.audioplayer.presentation.list
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,15 +32,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.example.audioplayer.audioList.data.Song
+import com.example.audioplayer.audioplayer.data.Song
 import com.example.audioplayer.audioplayer.domain.AudioPlayerUiState
 import com.example.audioplayer.audioplayer.domain.AudioPlayerViewModel
+import com.example.audioplayer.audioplayer.presentation.detail.AudioPlayerScreen
 
 @Composable
 fun SongListBottomBar(playerViewModel: AudioPlayerViewModel) {
     val uiState by playerViewModel.uiState.collectAsState()
-
+    val navigator = LocalNavigator.currentOrThrow
 
     Column {
         if (uiState.currentSong != null) {
@@ -46,7 +51,8 @@ fun SongListBottomBar(playerViewModel: AudioPlayerViewModel) {
                 song = uiState.currentSong!!,
                 playbackState = uiState,
                 onPlayPause = { playerViewModel.togglePlayPause() },
-                onSkipNext = { }
+                onSkipNext = { },
+                onClick = { navigator.push(AudioPlayerScreen(playerViewModel)) }
             )
         }
     }
@@ -57,13 +63,17 @@ fun MiniPlayer(
     song: Song,
     playbackState: AudioPlayerUiState,
     onPlayPause: () -> Unit,
-    onSkipNext: () -> Unit
+    onSkipNext: () -> Unit,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(8.dp),
+            .navigationBarsPadding()
+            .padding(top = 14.dp, start = 14.dp, end = 14.dp)
+            .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(

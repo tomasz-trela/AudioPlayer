@@ -1,4 +1,4 @@
-package com.example.audioplayer.audioList.presentation
+package com.example.audioplayer.audioplayer.presentation.list
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,9 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
-import com.example.audioplayer.audioList.domain.AudioListViewModel
 import com.example.audioplayer.audioplayer.domain.AudioPlayerViewModel
-import org.koin.compose.viewmodel.koinViewModel
 
 class AudioListScreen(private val playerViewModel: AudioPlayerViewModel) : Screen {
     @Composable
@@ -30,9 +28,8 @@ class AudioListScreen(private val playerViewModel: AudioPlayerViewModel) : Scree
 @Composable
 fun SongListView(
     playerViewModel: AudioPlayerViewModel,
-    listViewModel: AudioListViewModel = koinViewModel()
 ) {
-    val uiState by listViewModel.uiState.collectAsState()
+    val uiState by playerViewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -54,7 +51,7 @@ fun SongListView(
         ) {
             items(uiState.songs.size) { index ->
                 val song = uiState.songs[index]
-                SongTile(song, { playerViewModel.changeSong(song) })
+                SongTile(song, { playerViewModel.changeSong(index) })
             }
         }
     }

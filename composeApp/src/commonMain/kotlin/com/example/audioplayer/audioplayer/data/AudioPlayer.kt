@@ -1,5 +1,6 @@
 package com.example.audioplayer.audioplayer.data
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class AudioPlayer(
     onProgressCallback: (PlayerState) -> Unit,
     onReadyCallback: () -> Unit,
@@ -7,10 +8,12 @@ expect class AudioPlayer(
     playerState: PlayerState,
     context: Any?,
 ) {
-    fun prepare(url: String)
+    fun initPlaylist(songs: List<Song>)
     fun pause()
-    fun play(url: String)
+    fun play(index: Int? = null)
     fun playerState(): PlayerState
     fun cleanUp()
     fun seek(position: Float)
+    fun playNext()
+    fun playPrevious()
 }

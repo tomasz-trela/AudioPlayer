@@ -1,4 +1,4 @@
-package com.example.audioplayer.audioList.presentation
+package com.example.audioplayer.audioplayer.presentation.list
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,13 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
-import com.example.audioplayer.audioList.data.Song
-import com.example.audioplayer.audioplayer.domain.AudioPlayerViewModel
-import com.example.audioplayer.audioplayer.presentation.AudioPlayerScreen
-import com.example.audioplayer.core.utils.getContext
+import com.example.audioplayer.audioplayer.data.Song
 
 @Composable
 fun SongTile(song: Song, onTap: (Song) -> Unit) {

@@ -1,4 +1,4 @@
-package com.example.audioplayer.audioplayer.presentation
+package com.example.audioplayer.audioplayer.presentation.detail
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons

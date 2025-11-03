@@ -1,4 +1,4 @@
-package com.example.audioplayer.audioplayer.presentation
+package com.example.audioplayer.audioplayer.presentation.detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
