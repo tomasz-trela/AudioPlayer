@@ -14,7 +14,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.example.audioplayer.audioplayer.domain.AudioPlayerViewModel
+import com.example.audioplayer.audioplayer.presentation.detail.AudioPlayerScreen
 
 class AudioListScreen(private val playerViewModel: AudioPlayerViewModel) : Screen {
     @Composable
@@ -30,18 +33,30 @@ fun SongListView(
     playerViewModel: AudioPlayerViewModel,
 ) {
     val uiState by playerViewModel.uiState.collectAsState()
+    val navigator = LocalNavigator.currentOrThrow
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        "Liked Songs"
+                        "Playlist"
                     )
                 }
             )
         },
-        bottomBar = { SongListBottomBar(playerViewModel = playerViewModel) }
+        bottomBar = {
+            if (uiState.currentSong != null) {
+                SongListBottomBar(
+                    song = uiState.currentSong!!,
+                    playbackState = uiState,
+                    onPlayPause = { playerViewModel.togglePlayPause() },
+                    onSkipNext = { playerViewModel.playNextSong() },
+                    onClick = { navigator.push(AudioPlayerScreen(playerViewModel)) }
+                )
+            }
+
+        }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -51,7 +66,11 @@ fun SongListView(
         ) {
             items(uiState.songs.size) { index ->
                 val song = uiState.songs[index]
-                SongTile(song, { playerViewModel.changeSong(index) })
+                SongTile(
+                    song,
+                    index == uiState.songIndex,
+                    uiState.isPlaying,
+                    { playerViewModel.changeSong(index) })
             }
         }
     }

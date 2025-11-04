@@ -21,8 +21,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,34 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
 import coil3.compose.AsyncImage
 import com.example.audioplayer.audioplayer.data.Song
 import com.example.audioplayer.audioplayer.domain.AudioPlayerUiState
-import com.example.audioplayer.audioplayer.domain.AudioPlayerViewModel
-import com.example.audioplayer.audioplayer.presentation.detail.AudioPlayerScreen
+
 
 @Composable
-fun SongListBottomBar(playerViewModel: AudioPlayerViewModel) {
-    val uiState by playerViewModel.uiState.collectAsState()
-    val navigator = LocalNavigator.currentOrThrow
-
-    Column {
-        if (uiState.currentSong != null) {
-            MiniPlayer(
-                song = uiState.currentSong!!,
-                playbackState = uiState,
-                onPlayPause = { playerViewModel.togglePlayPause() },
-                onSkipNext = { },
-                onClick = { navigator.push(AudioPlayerScreen(playerViewModel)) }
-            )
-        }
-    }
-}
-
-@Composable
-fun MiniPlayer(
+fun SongListBottomBar(
     song: Song,
     playbackState: AudioPlayerUiState,
     onPlayPause: () -> Unit,
@@ -77,7 +54,7 @@ fun MiniPlayer(
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
-            model = "https://picsum.photos/300",
+            model = song.imageUrl,
             contentDescription = null,
             placeholder = rememberVectorPainter(Icons.Default.MusicNote),
             contentScale = ContentScale.Crop,

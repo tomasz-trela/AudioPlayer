@@ -1,5 +1,6 @@
 package com.example.audioplayer.audioplayer.presentation.list
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,7 +32,17 @@ import coil3.compose.AsyncImage
 import com.example.audioplayer.audioplayer.data.Song
 
 @Composable
-fun SongTile(song: Song, onTap: (Song) -> Unit) {
+fun SongTile(
+    song: Song,
+    isSongPlaying: Boolean,
+    isPlayingNow: Boolean,
+    onTap: (Song) -> Unit
+) {
+    val titleColor by animateColorAsState(
+        targetValue = if (isSongPlaying) Color(0xFF4CAF50) else Color.White,
+        label = "Title Color Animation"
+    )
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -46,7 +58,7 @@ fun SongTile(song: Song, onTap: (Song) -> Unit) {
                 .background(Color.DarkGray, RoundedCornerShape(12.dp)),
         ) {
             AsyncImage(
-                model = "https://picsum.photos/300",
+                model = song.imageUrl,
                 contentDescription = null,
                 placeholder = rememberVectorPainter(Icons.Default.MusicNote),
                 contentScale = ContentScale.Crop,
@@ -64,7 +76,7 @@ fun SongTile(song: Song, onTap: (Song) -> Unit) {
         ) {
             Text(
                 text = song.title,
-                color = Color.White,
+                color = titleColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
@@ -76,6 +88,13 @@ fun SongTile(song: Song, onTap: (Song) -> Unit) {
                 fontSize = 14.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        if (isSongPlaying) {
+            AnimatedEqualizer(
+                modifier = Modifier.padding(start = 8.dp),
+                isPlayingNow
             )
         }
     }
