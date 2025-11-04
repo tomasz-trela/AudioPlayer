@@ -39,3 +39,27 @@ Each platform shares the same logic and data models, differing only in the UI re
 All music is **streamed from the internet**.  
 Track data (title, artist, cover image, and music URL) is **mocked locally** for demonstration purposes — no backend or API is required.
 
+## 🖼️ Screenshots
+
+Below are example screenshots of the app running on all three supported platforms.
+
+
+### 🤖 Android
+
+| Playlist | Now Playing |
+|-----------|-------------|
+| ![Android Playlist](./screenshots/android_playlist.png) | ![Android Now Playing](./screenshots/android_now_playing.png) |
+
+### 🍎 iOS
+
+| Playlist | Now Playing |
+|-----------|-------------|
+| ![iOS Playlist](./screenshots/ios_playlist.png) | ![iOS Now Playing](./screenshots/ios_now_playing.png) |
+
+
+### 🌐 Web (Kotlin/JS)
+
+| Playlist | Now Playing |
+|-----------|-------------|
+| ![Web Playlist](./screenshots/web_playlist.png) | ![Web Now Playing](./screenshots/web_now_playing.png) |
+
