@@ -71,7 +71,6 @@ fun AudioPlayerContent(
         topBar = {
             PlayerTopAppBar(
                 onBackClick = { navigator.pop() },
-                onMoreClick = {}
             )
         }
     ) { innerPadding ->
