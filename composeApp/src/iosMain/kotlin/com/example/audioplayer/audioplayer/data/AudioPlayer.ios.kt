@@ -8,6 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -19,15 +20,12 @@ import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
 import platform.AVFoundation.AVPlayerItemDidPlayToEndTimeNotification
 import platform.AVFoundation.AVPlayerItemStatusFailed
-import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
-import platform.AVFoundation.AVPlayerItemStatusUnknown
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
-import platform.AVFoundation.addPeriodicTimeObserverForInterval
 import platform.AVFoundation.currentItem
+import platform.AVFoundation.currentTime
 import platform.AVFoundation.duration
 import platform.AVFoundation.pause
 import platform.AVFoundation.play
-import platform.AVFoundation.removeTimeObserver
 import platform.AVFoundation.replaceCurrentItemWithPlayerItem
 import platform.AVFoundation.seekToTime
 import platform.AVFoundation.timeControlStatus
@@ -41,29 +39,23 @@ import platform.darwin.NSEC_PER_SEC
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 @OptIn(ExperimentalForeignApi::class)
 actual class AudioPlayer actual constructor(
-    private val onProgressCallback: (PlayerState) -> Unit,
-    private val onReadyCallback: () -> Unit,
-    private val onErrorCallback: (Exception) -> Unit,
-    playerState: PlayerState,
     context: Any?
 ) {
     private val avPlayer: AVPlayer = AVPlayer()
-    private var timeObserver: Any? = null
     private var playbackEndObserver: Any? = null
 
-    private val _playerState = MutableStateFlow(playerState)
-    private val playerState = _playerState.asStateFlow()
+    private val _playerState = MutableStateFlow(PlayerState())
+    actual val playerState: StateFlow<PlayerState> = _playerState.asStateFlow()
 
     private var songs: List<Song> = emptyList()
     private var currentIndex: Int = -1
 
     private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private var pollingJob: Job? = null
+    private var statePollingJob: Job? = null
 
     init {
         setupAudioSession()
-        startStatusPolling()
-        addProgressTimeObserver()
+        startStatePolling()
     }
 
     actual fun initPlaylist(songs: List<Song>) {
@@ -111,13 +103,8 @@ actual class AudioPlayer actual constructor(
         avPlayer.seekToTime(time)
     }
 
-    actual fun playerState(): PlayerState {
-        return playerState.value
-    }
-
     actual fun cleanUp() {
-        pollingJob?.cancel()
-        removeProgressTimeObserver()
+        statePollingJob?.cancel()
         removePlaybackEndObserver()
         avPlayer.pause()
         avPlayer.replaceCurrentItemWithPlayerItem(null)
@@ -126,12 +113,10 @@ actual class AudioPlayer actual constructor(
     private fun loadTrack(at: Int, andPlay: Boolean) {
         if (at < 0 || at >= songs.size) return
         currentIndex = at
-
         removePlaybackEndObserver()
 
         val song = songs[currentIndex]
-        val nsUrl =
-            NSURL.URLWithString(song.url) ?: return onErrorCallback(Exception("Invalid URL"))
+        val nsUrl = NSURL.URLWithString(song.url) ?: return
         val playerItem = AVPlayerItem(uRL = nsUrl)
 
         _playerState.update {
@@ -146,41 +131,35 @@ actual class AudioPlayer actual constructor(
         }
     }
 
-    private fun startStatusPolling() {
-        pollingJob?.cancel()
-        pollingJob = coroutineScope.launch {
+    private fun startStatePolling() {
+        statePollingJob?.cancel()
+        statePollingJob = coroutineScope.launch {
             while (isActive) {
-                val isPlaying = avPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying
                 val currentItem = avPlayer.currentItem
+                val isPlaying = avPlayer.timeControlStatus == AVPlayerTimeControlStatusPlaying
+                val status = currentItem?.status
+                val isBuffering =
+                    status == null || (status == platform.AVFoundation.AVPlayerItemStatusUnknown && isPlaying)
 
-                val currentStatus = currentItem?.status
-                val isBuffering = currentStatus == AVPlayerItemStatusUnknown && isPlaying
+                val duration = currentItem?.duration?.let { CMTimeGetSeconds(it) }
+                    ?.takeIf { !it.isNaN() }?.toFloat() ?: _playerState.value.duration
 
-                val newDuration =
-                    if (currentItem?.duration?.let { CMTimeGetSeconds(it) }?.isNaN() == false) {
-                        CMTimeGetSeconds(currentItem.duration).toFloat()
-                    } else {
-                        _playerState.value.duration
-                    }
+                val currentTime = currentItem?.currentTime()?.let { CMTimeGetSeconds(it) }
+                    ?.takeIf { !it.isNaN() }?.toFloat() ?: 0f
+
+                if (status == AVPlayerItemStatusFailed) {
+                    println("Player item failed to load: ${currentItem.error}")
+                }
 
                 _playerState.update {
                     it.copy(
                         isPlaying = isPlaying,
                         isBuffering = isBuffering,
-                        duration = newDuration
+                        duration = duration,
+                        currentTime = currentTime
                     )
                 }
-
-                when (currentStatus) {
-                    AVPlayerItemStatusReadyToPlay -> onReadyCallback()
-                    AVPlayerItemStatusFailed -> {
-                        onErrorCallback(Exception("Failed to load media. Error: ${currentItem.error}"))
-                        pause()
-                    }
-
-                    else -> Unit
-                }
-                delay(100L)
+                delay(200L)
             }
         }
     }
@@ -191,25 +170,7 @@ actual class AudioPlayer actual constructor(
             audioSession.setCategory(AVAudioSessionCategoryPlayback, null)
             audioSession.setActive(true, null)
         } catch (e: Exception) {
-            onErrorCallback(e)
-        }
-    }
-
-    private fun addProgressTimeObserver() {
-        val interval = CMTimeMakeWithSeconds(0.1, NSEC_PER_SEC.toInt())
-        timeObserver = avPlayer.addPeriodicTimeObserverForInterval(interval, null) { time ->
-            val currentTime = CMTimeGetSeconds(time).toFloat()
-            if (currentTime.isFinite() && _playerState.value.currentTime != currentTime) {
-                _playerState.update { it.copy(currentTime = currentTime) }
-                onProgressCallback(_playerState.value)
-            }
-        }
-    }
-
-    private fun removeProgressTimeObserver() {
-        timeObserver?.let {
-            avPlayer.removeTimeObserver(it)
-            timeObserver = null
+            println("Failed to setup audio session: $e")
         }
     }
 

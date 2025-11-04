@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,14 +19,13 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PlayerTopAppBar(onBackClick: () -> Unit, onMoreClick: () -> Unit) {
+fun PlayerTopAppBar(onBackClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         TopAppBar(
-
             title = {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
@@ -45,14 +43,6 @@ fun PlayerTopAppBar(onBackClick: () -> Unit, onMoreClick: () -> Unit) {
                     )
                 }
             },
-            actions = {
-                IconButton(onClick = onMoreClick) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options",
-                    )
-                }
-            }
         )
     }
 }

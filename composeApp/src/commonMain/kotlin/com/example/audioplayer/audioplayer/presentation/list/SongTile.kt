@@ -46,10 +46,11 @@ fun SongTile(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp)
             .clickable {
                 onTap(song)
-            },
+            }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(

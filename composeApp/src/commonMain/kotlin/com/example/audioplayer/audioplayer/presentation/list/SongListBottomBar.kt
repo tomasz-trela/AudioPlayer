@@ -33,6 +33,8 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.audioplayer.audioplayer.data.Song
 import com.example.audioplayer.audioplayer.domain.AudioPlayerUiState
+import com.example.audioplayer.core.utils.Platform
+import com.example.audioplayer.core.utils.platform
 
 
 @Composable
@@ -46,11 +48,16 @@ fun SongListBottomBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .navigationBarsPadding()
-            .padding(top = 14.dp, start = 14.dp, end = 14.dp)
-            .clickable(onClick = onClick),
+            .padding(
+                top = 14.dp,
+                start = 14.dp,
+                end = 14.dp,
+                bottom = if (platform == Platform.WEB) 14.dp else 0.dp
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         AsyncImage(
